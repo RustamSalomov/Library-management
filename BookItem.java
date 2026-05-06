@@ -17,13 +17,23 @@ public class BookItem {
         this.status = BookStatus.AVAILABLE;
     }
 
-    public boolean checkout(Account account) {
-        if (status != BookStatus.AVAILABLE) return false;
+public BookLending checkout(Account account) throws LibraryActionException {
 
-        status = BookStatus.LOANED;
-        new BookLending(this, account);
-        return true;
+    if (status != BookStatus.AVAILABLE) {
+        throw new LibraryActionException("Book is not available.");
     }
+
+    if (account instanceof Member member) {
+        if (member.getBorrowedBooksCount() >= member.getMaxBooksAllowed()) {
+            throw new LibraryActionException("Max book limit reached.");
+        }
+    }
+
+    status = BookStatus.LOANED;
+
+    BookLending lending = new BookLending(this, account);
+    return lending;
+}
 
     public void returnBook() {
         status = BookStatus.AVAILABLE;
