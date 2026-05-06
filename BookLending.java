@@ -26,7 +26,7 @@ public class BookLending {
         long daysLate = diff / (1000 * 60 * 60 * 24);
 
         if (daysLate > 0) {
-            return daysLate * 1.0; // fine per day
+            return daysLate * 1.0; 
         }
         return 0;
     }
