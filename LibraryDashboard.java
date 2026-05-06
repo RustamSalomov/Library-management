@@ -254,6 +254,12 @@ public class LibraryDashboard {
     }
 
     private void checkoutBook() {
+        String id = memberIdField.getText();
+        String name = memberNameField.getText();
+
+            if (!id.isEmpty() && !name.isEmpty()) {
+                currentMember = new Member(id, name);
+        }
 
         BookItem selected = table.getSelectionModel().getSelectedItem();
 
