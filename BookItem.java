@@ -16,6 +16,9 @@ public class BookItem {
         this.book = book;
         this.status = BookStatus.AVAILABLE;
     }
+    public void setStatus(BookStatus status) {
+    this.status = status;
+}
 
 public BookLending checkout(Account account) throws LibraryActionException {
 
