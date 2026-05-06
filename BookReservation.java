@@ -31,7 +31,5 @@ public BookReservation(BookItem bookItem, Account member) {
     public ReservationStatus getStatus() {
         return status;
     }
-    public void setStatus(BookStatus status) {
-    this.status = status;
-}
+
 }
