@@ -1,3 +1,4 @@
+import java.util.*;
 public class Book {
     private String ISBN;
     private String title;
@@ -12,6 +13,13 @@ public class Book {
         this.publisher = publisher;
         this.authors = new ArrayList<>();
     }
+    public void addAuthor(Author author) {
+        authors.add(author);
+    }
+
+    public List<Author> getAuthors() {
+        return authors;
+    }
 
     public String getISBN() {
         return ISBN;
@@ -25,4 +33,5 @@ public class Book {
     public String getPublisher() {
         return publisher;
     }
+
 }
