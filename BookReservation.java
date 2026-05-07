@@ -11,14 +11,14 @@ public class BookReservation {
     private BookItem bookItem;
     private Account member;
 
-public BookReservation(BookItem bookItem, Account member) {
-    this.bookItem = bookItem;
-    this.member = member;
-    this.creationDate = new Date();
-    this.status = ReservationStatus.WAITING;
+    public BookReservation(BookItem bookItem, Account member) {
+        this.bookItem = bookItem;
+        this.member = member;
+        this.creationDate = new Date();
+        this.status = ReservationStatus.WAITING;
 
-    bookItem.setStatus(BookStatus.RESERVED);
-}
+        bookItem.addReservation(this);
+    }
 
     public void completeReservation() {
         status = ReservationStatus.COMPLETED;
@@ -31,5 +31,7 @@ public BookReservation(BookItem bookItem, Account member) {
     public ReservationStatus getStatus() {
         return status;
     }
-
+    public Account getMember() {
+        return member;
+    }
 }
