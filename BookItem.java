@@ -1,3 +1,4 @@
+import java.util.*;
 enum BookStatus {
     AVAILABLE,
     RESERVED,
@@ -9,7 +10,8 @@ public class BookItem {
     private String barcode;
     private Book book;
     private BookStatus status;
-    private Rack rack;
+    private boolean referenceOnly;
+    private List<BookReservation> reservations = new ArrayList<>();
 
     public BookItem(String barcode, Book book) {
         this.barcode = barcode;
@@ -17,26 +19,8 @@ public class BookItem {
         this.status = BookStatus.AVAILABLE;
     }
     public void setStatus(BookStatus status) {
-    this.status = status;
-}
-
-public BookLending checkout(Account account) throws LibraryActionException {
-
-    if (status != BookStatus.AVAILABLE) {
-        throw new LibraryActionException("Book is not available.");
+        this.status = status;
     }
-
-    if (account instanceof Member member) {
-        if (member.getBorrowedBooksCount() >= member.getMaxBooksAllowed()) {
-            throw new LibraryActionException("Max book limit reached.");
-        }
-    }
-
-    status = BookStatus.LOANED;
-
-    BookLending lending = new BookLending(this, account);
-    return lending;
-}
 
     public void returnBook() {
         status = BookStatus.AVAILABLE;
@@ -50,5 +34,30 @@ public BookLending checkout(Account account) throws LibraryActionException {
     }
     public Book getBook() {
         return book;
+    }
+    public boolean isReferenceOnly() {
+        return referenceOnly;
+    }
+
+    public boolean hasReservations() {
+        return !reservations.isEmpty();
+    }
+
+    public boolean isReservedByOther(Member member) {
+
+        for (BookReservation reservation : reservations) {
+
+            if (reservation.getMember() != member &&
+                    reservation.getStatus() == ReservationStatus.WAITING) {
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void addReservation(BookReservation reservation) {
+        reservations.add(reservation);
     }
 }
