@@ -26,6 +26,10 @@ public class LibraryDashboard {
     private TextField isbnField;
     private TextField memberIdField;
     private TextField memberNameField;
+    private TextField loginIdField;
+    private PasswordField passwordField;
+    private ComboBox<String> roleBox;
+    private Librarian currentLibrarian;
 
     private TextArea outputArea;
 
@@ -34,6 +38,10 @@ public class LibraryDashboard {
     private LibraryActionHandler actionHandler;
 
     public LibraryDashboard() {
+        currentLibrarian = new Librarian(
+                "L001",
+                "Main Librarian"
+        );
 
         actionHandler = new LibraryActionHandler();
 
@@ -51,6 +59,7 @@ public class LibraryDashboard {
         createBottomSection();
 
         loadSampleBooks();
+        createLoginDialog();
     }
 
     public Parent getRoot() {
@@ -63,7 +72,18 @@ public class LibraryDashboard {
         title.setFont(Font.font("Arial", FontWeight.BOLD, 28));
         title.setTextFill(Color.WHITE);
 
-        HBox top = new HBox(title);
+        Label librarianLabel = new Label(
+                "Logged in as: " + currentLibrarian.getName()
+        );
+
+        librarianLabel.setTextFill(Color.WHITE);
+        librarianLabel.setFont(Font.font("Arial", 14));
+
+        VBox header = new VBox(5, title, librarianLabel);
+
+        header.setAlignment(Pos.CENTER);
+
+        HBox top = new HBox(header);
         top.setAlignment(Pos.CENTER);
         top.setPadding(new Insets(20));
         top.setStyle("-fx-background-color: #1e3c72;");
@@ -242,60 +262,67 @@ public class LibraryDashboard {
     }
 
     private void addBook() {
+        if (currentLibrarian == null) {
+            showMessage("Only librarians can add books.");
+        }
+else {
+            try {
 
-        try {
+                String barcode = barcodeField.getText().trim();
+                String title = titleField.getText().trim();
+                String isbn = isbnField.getText().trim();
 
-            String barcode = barcodeField.getText().trim();
-            String title = titleField.getText().trim();
-            String isbn = isbnField.getText().trim();
-
-            if (barcode.isEmpty() || title.isEmpty() || isbn.isEmpty()) {
-                showMessage("Please fill all book fields.");
-                return;
-            }
-
-            for (BookItem existing : books) {
-
-                if (existing.getBarcode().equals(barcode)) {
-                    showMessage("Barcode already exists.");
+                if (barcode.isEmpty() || title.isEmpty() || isbn.isEmpty()) {
+                    showMessage("Please fill all book fields.");
                     return;
                 }
+
+                for (BookItem existing : books) {
+
+                    if (existing.getBarcode().equals(barcode)) {
+                        showMessage("Barcode already exists.");
+                        return;
+                    }
+                }
+
+                Book book = new Book(
+                        isbn,
+                        title,
+                        "General",
+                        "Unknown Publisher"
+                );
+
+                BookItem item = new BookItem(barcode, book);
+
+                books.add(item);
+
+                table.refresh();
+
+                showMessage("Book added successfully: " + title);
+
+                clearFields();
+
+            } catch (Exception e) {
+                showMessage("Error while adding book.");
             }
-
-            Book book = new Book(
-                    isbn,
-                    title,
-                    "General",
-                    "Unknown Publisher"
-            );
-
-            BookItem item = new BookItem(barcode, book);
-
-            books.add(item);
-
-            table.refresh();
-
-            showMessage("Book added successfully: " + title);
-
-            clearFields();
-
-        } catch (Exception e) {
-            showMessage("Error while adding book.");
         }
     }
 
     private void removeBook() {
+        if (currentLibrarian == null) {
+            showMessage("Only librarians can remove books.");
+        } else {
+            BookItem selected = table.getSelectionModel().getSelectedItem();
 
-        BookItem selected = table.getSelectionModel().getSelectedItem();
+            if (selected == null) {
+                showMessage("Select a book first.");
+                return;
+            }
 
-        if (selected == null) {
-            showMessage("Select a book first.");
-            return;
+            books.remove(selected);
+
+            showMessage("Book removed successfully.");
         }
-
-        books.remove(selected);
-
-        showMessage("Book removed successfully.");
     }
 
     private void checkoutBook() {
@@ -402,6 +429,80 @@ public class LibraryDashboard {
         barcodeField.clear();
         titleField.clear();
         isbnField.clear();
+    }
+    private void createLoginDialog() {
+
+        Dialog<Void> dialog = new Dialog<>();
+
+        dialog.setTitle("Library Login");
+
+        VBox box = new VBox(10);
+        box.setPadding(new Insets(20));
+
+        loginIdField = new TextField();
+        loginIdField.setPromptText("User ID");
+
+        passwordField = new PasswordField();
+        passwordField.setPromptText("Password");
+
+        roleBox = new ComboBox<>();
+        roleBox.getItems().addAll("Librarian", "Member");
+        roleBox.setValue("Librarian");
+
+        Button loginButton = new Button("Login");
+
+        loginButton.setOnAction(e -> {
+
+            String id = loginIdField.getText().trim();
+            String password = passwordField.getText().trim();
+            String role = roleBox.getValue();
+
+            if (id.isEmpty() || password.isEmpty()) {
+                showMessage("Enter login credentials.");
+                return;
+            }
+            if (role.equals("Librarian")) {
+
+                if (id.equals("admin") && password.equals("admin123")) {
+
+                    currentLibrarian = new Librarian(
+                            "L001",
+                            "Main Librarian"
+                    );
+
+                    showMessage("Librarian logged in successfully.");
+
+                    dialog.close();
+
+                } else {
+                    showMessage("Invalid librarian credentials.");
+                }
+
+            } else {
+
+                currentMember = new Member(id, id);
+
+                showMessage("Member logged in successfully.");
+
+                dialog.close();
+            }
+        });
+
+        box.getChildren().addAll(
+                new Label("User ID"),
+                loginIdField,
+                new Label("Password"),
+                passwordField,
+                new Label("Role"),
+                roleBox,
+                loginButton
+        );
+
+        dialog.getDialogPane().setContent(box);
+
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+
+        dialog.showAndWait();
     }
 
     private void loadSampleBooks() {
