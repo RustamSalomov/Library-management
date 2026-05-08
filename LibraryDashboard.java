@@ -1,4 +1,4 @@
-package org.example.ui;
+package org.example;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -11,9 +11,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import org.example.actions.LibraryActionHandler;
-import org.example.exceptions.LibraryActionException;
-import org.example.models.*;
+
 
 public class LibraryDashboard {
 
@@ -81,7 +79,7 @@ public class LibraryDashboard {
 
         leftPanel.setStyle(
                 "-fx-background-color: white;" +
-                "-fx-border-color: lightgray;"
+                        "-fx-border-color: lightgray;"
         );
 
         Label sectionTitle = new Label("Manage Books");
@@ -172,6 +170,37 @@ public class LibraryDashboard {
         table.getColumns().addAll(barcodeColumn, titleColumn, isbnColumn, statusColumn);
 
         table.setItems(books);
+        statusColumn.setCellFactory(column -> new TableCell<>() {
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
+
+                super.updateItem(item, empty);
+
+                if (empty || item == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+
+                    setText(item);
+
+                    switch (item) {
+
+                        case "AVAILABLE" ->
+                                setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
+
+                        case "LOANED" ->
+                                setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+
+                        case "RESERVED" ->
+                                setStyle("-fx-text-fill: orange; -fx-font-weight: bold;");
+
+                        default ->
+                                setStyle("-fx-text-fill: black;");
+                    }
+                }
+            }
+        });
 
         centerBox.getChildren().addAll(booksLabel, table);
 
@@ -202,11 +231,11 @@ public class LibraryDashboard {
         button.setMaxWidth(Double.MAX_VALUE);
         button.setStyle(
                 "-fx-background-color: " + color + ";" +
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 14px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 8px;" +
-                "-fx-padding: 10px;"
+                        "-fx-text-fill: white;" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-background-radius: 8px;" +
+                        "-fx-padding: 10px;"
         );
 
         return button;
@@ -216,19 +245,35 @@ public class LibraryDashboard {
 
         try {
 
-            String barcode = barcodeField.getText();
-            String title = titleField.getText();
-            String isbn = isbnField.getText();
+            String barcode = barcodeField.getText().trim();
+            String title = titleField.getText().trim();
+            String isbn = isbnField.getText().trim();
 
             if (barcode.isEmpty() || title.isEmpty() || isbn.isEmpty()) {
                 showMessage("Please fill all book fields.");
                 return;
             }
 
-            Book book = new Book(isbn, title, "General", "Unknown Publisher");
+            for (BookItem existing : books) {
+
+                if (existing.getBarcode().equals(barcode)) {
+                    showMessage("Barcode already exists.");
+                    return;
+                }
+            }
+
+            Book book = new Book(
+                    isbn,
+                    title,
+                    "General",
+                    "Unknown Publisher"
+            );
+
             BookItem item = new BookItem(barcode, book);
 
             books.add(item);
+
+            table.refresh();
 
             showMessage("Book added successfully: " + title);
 
@@ -254,12 +299,6 @@ public class LibraryDashboard {
     }
 
     private void checkoutBook() {
-        String id = memberIdField.getText();
-        String name = memberNameField.getText();
-
-            if (!id.isEmpty() && !name.isEmpty()) {
-                currentMember = new Member(id, name);
-        }
 
         BookItem selected = table.getSelectionModel().getSelectedItem();
 
@@ -268,13 +307,28 @@ public class LibraryDashboard {
             return;
         }
 
+        String id = memberIdField.getText().trim();
+        String name = memberNameField.getText().trim();
+
+        if (id.isEmpty() || name.isEmpty()) {
+            showMessage("Please enter member information.");
+            return;
+        }
+
+        if (currentMember == null || !currentMember.getId().equals(id)) {
+            currentMember = new Member(id, name);
+        }
+
         try {
 
             actionHandler.checkOutBook(currentMember, selected);
 
             table.refresh();
 
-            showMessage("Book checked out successfully.");
+            showMessage(
+                    "Book checked out successfully by "
+                            + name
+            );
 
         } catch (LibraryActionException e) {
             showMessage(e.getMessage());
@@ -287,6 +341,11 @@ public class LibraryDashboard {
 
         if (selected == null) {
             showMessage("Please select a book.");
+            return;
+        }
+
+        if (currentMember == null) {
+            showMessage("No active member.");
             return;
         }
 
@@ -316,9 +375,16 @@ public class LibraryDashboard {
             return;
         }
 
+        if (currentMember == null) {
+            showMessage("No active member.");
+            return;
+        }
+
         try {
 
             actionHandler.renewBook(currentMember, selected);
+
+            table.refresh();
 
             showMessage("Book renewed successfully.");
 
