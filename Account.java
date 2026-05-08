@@ -1,3 +1,5 @@
+package org.example;
+
 enum AccountStatus {
     ACTIVE,
     CLOSED,
@@ -25,5 +27,11 @@ abstract class Account {
     }
 
     public abstract int getMaxBooksAllowed();
+    public String getId() {
+        return id;
+    }
+    public String getName() {
+        return name;
+    }
 }
 
